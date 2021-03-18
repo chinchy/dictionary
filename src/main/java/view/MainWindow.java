@@ -1,20 +1,23 @@
 package view;
 
+import controller.DictController;
 import utils.XmlConfig;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serial;
+import java.util.ArrayList;
 
-public class MainWindow extends JFrame  {
+public class MainWindow extends JFrame {
+    DictController dictController = new DictController();
     JMenuBar menuBar;
     JTextField searchField;
     JButton searchButton;
-    JScrollPane listPane;
+    JList<String> listPane;
     JTextArea textArea;
     JPanel contentPanel;
     JPanel leftPanel;
@@ -27,14 +30,34 @@ public class MainWindow extends JFrame  {
         super("Толковый словарь");
 
         menuBar = new JMenuBar();
+        searchButton = new JButton();
+        searchField = new JTextField(25);
+        listPane = new JList<>();
+        textArea = new JTextArea("", 10, 40);
+
         menuBar.add(createFileMenu());
         menuBar.add(createEditMenu());
         menuBar.add(createAboutMenu());
         setJMenuBar(menuBar);
 
-        searchField = new JTextField(25);
+        searchField.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                    listPane.setListData(dictController.getWordsList(searchField.getText()));
+            }
+        });
+        searchButton.addActionListener(e -> listPane.setListData(dictController.getWordsList(searchField.getText())));
+        listPane.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if ( e.getClickCount() == 1 ) {
+                    ArrayList<String> list = (ArrayList<String>) listPane.getSelectedValuesList();
+                    String mean = list.get(list.size() - 1);
+                    textArea.setText(mean + dictController.getMean(mean));
+                }
+            }
+        });
 
-        searchButton = new JButton(new SearchAction());
+
         try {
             Image img = ImageIO.read(new File(new XmlConfig().getByKey("media_folder") + "magnifier.png"));
             Image new_img = img.getScaledInstance(20, 20, java.awt.Image.SCALE_SMOOTH);
@@ -49,9 +72,8 @@ public class MainWindow extends JFrame  {
         searchButton.setFocusPainted(false);
         searchButton.setContentAreaFilled(false);
 
-        listPane = new JScrollPane();
-
-        textArea = new JTextArea("", 10, 40);
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
 
         contentPanel = new JPanel(new BorderLayout());
         leftPanel = new JPanel(new BorderLayout());
@@ -64,7 +86,7 @@ public class MainWindow extends JFrame  {
         searchPanel.add(searchButton, BorderLayout.EAST);
         leftPanel.add(searchPanel, BorderLayout.NORTH);
 
-        listPanel.add(listPane, BorderLayout.CENTER);
+        listPanel.add(new JScrollPane(listPane), BorderLayout.CENTER);
         leftPanel.add(listPanel, BorderLayout.SOUTH);
 
         meanPanel.add(new JScrollPane(textArea), BorderLayout.CENTER);
@@ -74,9 +96,10 @@ public class MainWindow extends JFrame  {
         contentPanel.add(rightPanel, BorderLayout.EAST);
         setContentPane(contentPanel);
 
-//        JFrame.setDefaultLookAndFeelDecorated(true);
+        JFrame.setDefaultLookAndFeelDecorated(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         pack();
+        setMinimumSize(new Dimension(740, 200));
         setVisible(true);
     }
 
@@ -86,7 +109,7 @@ public class MainWindow extends JFrame  {
 
         JMenuItem clear = new JMenuItem(new ClearAction());
         JMenuItem search = new JMenuItem("Найти");
-        search.addActionListener(new SearchAction());
+        search.addActionListener(e -> listPane.setListData(dictController.getWordsList(searchField.getText())));
         JMenuItem exit = new JMenuItem(new ExitAction());
 
         file.add(clear);
@@ -178,16 +201,6 @@ public class MainWindow extends JFrame  {
         }
         public void actionPerformed(ActionEvent e) {
             System.out.println("Нажатие на кнопку Новый поиск");
-        }
-    }
-
-    static class SearchAction extends AbstractAction {
-        @Serial
-        private static final long serialVersionUID = 1L;
-        SearchAction() {}
-        public void actionPerformed(ActionEvent e) {
-//            JButton btn = (JButton) e.getSource();
-            System.out.println("Нажатие на кнопку Поиск");
         }
     }
 
