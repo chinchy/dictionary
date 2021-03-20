@@ -14,6 +14,7 @@ import java.util.ArrayList;
 
 public class MainWindow extends JFrame {
     DictController dictController = new DictController();
+    private static JFrame frame = null;
     JMenuBar menuBar;
     JTextField searchField;
     JButton searchButton;
@@ -28,6 +29,7 @@ public class MainWindow extends JFrame {
 
     public MainWindow () {
         super("Толковый словарь");
+        frame = this;
 
         menuBar = new JMenuBar();
         searchButton = new JButton();
@@ -37,7 +39,7 @@ public class MainWindow extends JFrame {
 
         menuBar.add(createFileMenu());
         menuBar.add(createEditMenu());
-        menuBar.add(createAboutMenu());
+        menuBar.add(createAboutMenu(frame));
         setJMenuBar(menuBar);
 
         searchField.addKeyListener(new KeyAdapter() {
@@ -52,11 +54,10 @@ public class MainWindow extends JFrame {
                 if ( e.getClickCount() == 1 ) {
                     ArrayList<String> list = (ArrayList<String>) listPane.getSelectedValuesList();
                     String mean = list.get(list.size() - 1);
-                    textArea.setText(mean + dictController.getMean(mean));
+                    textArea.setText(mean + ": " + dictController.getMean(mean));
                 }
             }
         });
-
 
         try {
             Image img = ImageIO.read(new File(new XmlConfig().getByKey("media_folder") + "magnifier.png"));
@@ -96,20 +97,30 @@ public class MainWindow extends JFrame {
         contentPanel.add(rightPanel, BorderLayout.EAST);
         setContentPane(contentPanel);
 
-        JFrame.setDefaultLookAndFeelDecorated(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         pack();
         setMinimumSize(new Dimension(740, 200));
         setVisible(true);
     }
 
+    public static void setLocked(boolean isLock){
+        frame.setEnabled(!isLock);
+    }
+
     private JMenu createFileMenu()
     {
         JMenu file = new JMenu("Файл");
 
-        JMenuItem clear = new JMenuItem(new ClearAction());
+        JMenuItem clear = new JMenuItem("Очистить");
+        clear.addActionListener(e -> {
+            searchField.setText("");
+            listPane.setListData(new String[] {});
+            textArea.setText("");
+        });
+
         JMenuItem search = new JMenuItem("Найти");
         search.addActionListener(e -> listPane.setListData(dictController.getWordsList(searchField.getText())));
+
         JMenuItem exit = new JMenuItem(new ExitAction());
 
         file.add(clear);
@@ -124,72 +135,42 @@ public class MainWindow extends JFrame {
     {
         JMenu edit = new JMenu("Изменить слово");
 
-        JMenuItem new_word = new JMenuItem(new NewWordAction());
-        JMenuItem edit_word = new JMenuItem(new EditWordAction());
-        JMenuItem delete_word = new JMenuItem(new DeleteWordAction());
+        JMenuItem new_word = new JMenuItem("Добавить слово");
+
+        new_word.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new NewWordWindow();
+                setLocked(true);
+            }
+        });
 
         edit.add(new_word);
         edit.addSeparator();
-        edit.add(edit_word);
-        edit.add(delete_word);
 
         return edit;
     }
 
-    private JMenu createAboutMenu()
+    private JMenu createAboutMenu(JFrame frame)
     {
         JMenu about = new JMenu("Справка");
-        JMenuItem help = new JMenuItem(new AboutAction());
+        JMenuItem help = new JMenuItem("Справка");
+        help.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(frame,
+                        """
+                                Программа "Толковый словарь" реализована в рамках выполнения 
+                                практического задания по дисцеплине Технологии разработки 
+                                качественного программного обеспечения\s
+                                Илья Петров\s
+                                2021""",
+                        "О программе",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
         about.add(help);
         return about;
-    }
-
-    static class AboutAction extends AbstractAction
-    {
-        @Serial
-        private static final long serialVersionUID = 1L;
-        AboutAction() {
-            putValue(NAME, "О программе");
-        }
-        public void actionPerformed(ActionEvent e) {
-            System.out.println("Нажатие на кнопку О программе");
-        }
-    }
-
-    static class NewWordAction extends AbstractAction
-    {
-        @Serial
-        private static final long serialVersionUID = 1L;
-        NewWordAction() {
-            putValue(NAME, "Добавить новое");
-        }
-        public void actionPerformed(ActionEvent e) {
-            System.out.println("Нажатие на кнопку Добавить слово");
-        }
-    }
-
-    static class EditWordAction extends AbstractAction
-    {
-        @Serial
-        private static final long serialVersionUID = 1L;
-        EditWordAction() {
-            putValue(NAME, "Изменить");
-        }
-        public void actionPerformed(ActionEvent e) {
-            System.out.println("Нажатие на кнопку Изменить слово");
-        }
-    }
-
-    static class DeleteWordAction extends AbstractAction
-    {
-        @Serial
-        private static final long serialVersionUID = 1L;
-        DeleteWordAction() {
-            putValue(NAME, "Удалить");
-        }
-        public void actionPerformed(ActionEvent e) {
-            System.out.println("Нажатие на кнопку Удалить слово");
-        }
     }
 
     static class ClearAction extends AbstractAction

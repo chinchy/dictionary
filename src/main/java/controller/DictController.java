@@ -6,8 +6,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Vector;
 
 public class DictController {
@@ -55,6 +53,17 @@ public class DictController {
             e.printStackTrace();
         }
         return mean;
+    }
+
+    public String addWord(String word, String mean) {
+        try {
+            ResultSet result = statement.executeQuery("INSERT INTO dict(word, mean) VALUES ('" +
+                    word + "', '" + mean + "') RETURNING id");
+            result.next();
+            return String.valueOf(result.getInt(1));
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 
 }
