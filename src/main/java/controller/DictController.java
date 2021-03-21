@@ -2,13 +2,11 @@ package controller;
 
 import utils.XmlConfig;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Vector;
 
 public class DictController {
+    Connection conn;
     Statement statement;
 
     public DictController() {
@@ -18,7 +16,7 @@ public class DictController {
 
         try {
             Class.forName("org.postgresql.Driver");
-            Connection conn = DriverManager.getConnection(url,
+            conn = DriverManager.getConnection(url,
                     new XmlConfig().getByKey("db_user"),
                     new XmlConfig().getByKey("db_pass"));
             statement = conn.createStatement();
@@ -30,7 +28,9 @@ public class DictController {
     public Vector<String> getWordsList(String partOfWord) {
         Vector<String> words = new Vector<>();
         try {
-            ResultSet result = statement.executeQuery("SELECT word FROM dict WHERE word ILIKE '%" + partOfWord + "%'");
+            PreparedStatement preparedStatement = conn.prepareStatement("SELECT word FROM dict WHERE word ILIKE ?;");
+            preparedStatement.setString(1, "%" + partOfWord + "%");
+            ResultSet result = preparedStatement.executeQuery();
             while (result.next()){
                 words.add(result.getString(1));
             }
@@ -45,7 +45,9 @@ public class DictController {
     public String getMean(String word) {
         String mean = "";
         try {
-            ResultSet result = statement.executeQuery("SELECT mean FROM dict WHERE word ILIKE '" + word + "'");
+            PreparedStatement preparedStatement = conn.prepareStatement("SELECT mean FROM dict WHERE word ILIKE ?");
+            preparedStatement.setString(1, "%" + word + "%");
+            ResultSet result = preparedStatement.executeQuery();
             while (result.next()){
                 mean = result.getString(1);
             }
@@ -57,8 +59,10 @@ public class DictController {
 
     public String addWord(String word, String mean) {
         try {
-            ResultSet result = statement.executeQuery("INSERT INTO dict(word, mean) VALUES ('" +
-                    word + "', '" + mean + "') RETURNING id");
+            PreparedStatement preparedStatement = conn.prepareStatement("INSERT INTO dict(word, mean) VALUES (?, ?) RETURNING id");
+            preparedStatement.setString(1, word);
+            preparedStatement.setString(2, mean);
+            ResultSet result = preparedStatement.executeQuery();
             result.next();
             return String.valueOf(result.getInt(1));
         } catch (Exception e) {
