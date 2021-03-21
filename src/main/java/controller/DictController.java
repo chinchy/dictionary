@@ -30,9 +30,9 @@ public class DictController {
         try {
             PreparedStatement preparedStatement = conn.prepareStatement("SELECT word FROM dict WHERE word ILIKE ?;");
             preparedStatement.setString(1, "%" + partOfWord + "%");
-            ResultSet result = preparedStatement.executeQuery();
-            while (result.next()){
-                tmp_words.add(result.getString(1));
+            try (final ResultSet result = preparedStatement.executeQuery()) {
+                while (result.next())
+                    tmp_words.add(result.getString(1));
             }
             if (tmp_words.isEmpty())
                 tmp_words.add("СЛОВ НЕ НАЙДЕНО");
@@ -51,9 +51,9 @@ public class DictController {
         try {
             PreparedStatement preparedStatement = conn.prepareStatement("SELECT mean FROM dict WHERE word ILIKE ?");
             preparedStatement.setString(1, "%" + word + "%");
-            ResultSet result = preparedStatement.executeQuery();
-            while (result.next()){
-                mean = result.getString(1);
+            try (final ResultSet result = preparedStatement.executeQuery()) {
+                while (result.next())
+                    mean = result.getString(1);
             }
         } catch (Exception e) {
             e.printStackTrace();
