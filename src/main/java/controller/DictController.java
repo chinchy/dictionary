@@ -3,7 +3,7 @@ package controller;
 import utils.XmlConfig;
 
 import java.sql.*;
-import java.util.Vector;
+import java.util.ArrayList;
 
 public class DictController {
     Connection conn;
@@ -25,19 +25,23 @@ public class DictController {
         }
     }
 
-    public Vector<String> getWordsList(String partOfWord) {
-        Vector<String> words = new Vector<>();
+    public String[] getWordsList(String partOfWord) {
+        ArrayList<String> tmp_words = new ArrayList<>();
         try {
             PreparedStatement preparedStatement = conn.prepareStatement("SELECT word FROM dict WHERE word ILIKE ?;");
             preparedStatement.setString(1, "%" + partOfWord + "%");
             ResultSet result = preparedStatement.executeQuery();
             while (result.next()){
-                words.add(result.getString(1));
+                tmp_words.add(result.getString(1));
             }
-            if (words.isEmpty())
-                words.add("СЛОВ НЕ НАЙДЕНО");
+            if (tmp_words.isEmpty())
+                tmp_words.add("СЛОВ НЕ НАЙДЕНО");
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        String[] words = new String[tmp_words.size()];
+        for (int i = 0; i < tmp_words.size(); i++) {
+            words[i] = tmp_words.get(i);
         }
         return words;
     }
